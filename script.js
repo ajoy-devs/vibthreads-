@@ -14,6 +14,7 @@ const LS_ORDERS = 'vibethreads_orders';
 const LS_THEME = 'vibethreads_theme';
 const LS_NEWSLETTER = 'vibethreads_newsletter';
 const LS_CUSTOM_PRODUCTS = 'vibethreads_custom_products';
+const LS_PRODUCT_OVERRIDES = 'vibethreads_product_overrides';
 
 /* ---------- helpers ---------- */
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
@@ -118,8 +119,10 @@ const PRODUCTS = [
 ];
 
 function getAllProducts() {
+  const overrides = readLS(LS_PRODUCT_OVERRIDES, {});
+  const base = PRODUCTS.map(p => overrides[p.id] ? { ...p, ...overrides[p.id] } : p);
   const custom = readLS(LS_CUSTOM_PRODUCTS, []);
-  return [...PRODUCTS, ...custom];
+  return [...base, ...custom];
 }
 
 /* Category taxonomy shown in the tabbed pill sections */
@@ -775,16 +778,62 @@ function initAdmin() {
   }
 
   /* ---------- product management ---------- */
-  $('#addProductBtn')?.addEventListener('click', () => {
+  let editTarget = null; // { type:'custom'|'builtin', id, index }
+
+  function openApModal(target) {
+    editTarget = target;
+    const title = $('#apModalTitle');
+    const btn = $('#apSubmitBtn');
+    const form = $('#addProductForm');
+    form.reset();
+    $('#apImagePreviewWrap').style.display = 'none';
+
+    if (target) {
+      title.textContent = 'Edit Product';
+      btn.textContent = 'Update Product';
+      const all = getAllProducts();
+      const p = all.find(x => x.id === target.id);
+      if (p) {
+        $('#apEditId').value = p.id;
+        $('#apName').value = p.name;
+        $('#apCategory').value = p.category;
+        $('#apPrice').value = p.price;
+        $('#apSizes').value = p.sizes.join(', ');
+        $('#apColors').value = p.colors.join(', ');
+        $('#apImage').value = p.image || '';
+        $('#apTags').value = p.tags.join(', ');
+      }
+    } else {
+      title.textContent = 'Add New Product';
+      btn.textContent = 'Save Product';
+      $('#apEditId').value = '';
+    }
     $('#apModal').classList.add('show');
     $('#apOverlay').classList.add('show');
-  });
+  }
+
+  $('#addProductBtn')?.addEventListener('click', () => openApModal(null));
+
   function closeApModal() {
     $('#apModal').classList.remove('show');
     $('#apOverlay').classList.remove('show');
+    editTarget = null;
   }
   $('#apClose')?.addEventListener('click', closeApModal);
   $('#apOverlay')?.addEventListener('click', closeApModal);
+
+  // Image file upload → data URI preview
+  $('#apImageFile')?.addEventListener('change', () => {
+    const file = $('#apImageFile').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      $('#apImagePreview').src = e.target.result;
+      $('#apImagePreviewWrap').style.display = 'block';
+      $('#apImage').value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
   $('#addProductForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -798,18 +847,39 @@ function initAdmin() {
     if (!name || !category || !price || !sizes.length || !colors.length || !tags.length) {
       toast('Please fill all required fields'); return;
     }
-    const newProduct = {
-      id: 'cp-' + uid().toUpperCase(),
-      name, category, price, sizes, colors, tags,
-      image: image || undefined,
-      _custom: true,
-    };
-    const custom = readLS(LS_CUSTOM_PRODUCTS, []);
-    custom.unshift(newProduct);
-    writeLS(LS_CUSTOM_PRODUCTS, custom);
+
+    if (editTarget) {
+      // ---- EDIT MODE ----
+      if (editTarget.type === 'custom') {
+        const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+        const idx = custom.findIndex(p => p.id === editTarget.id);
+        if (idx > -1) {
+          custom[idx] = { ...custom[idx], name, category, price, sizes, colors, tags, image: image || undefined };
+          writeLS(LS_CUSTOM_PRODUCTS, custom);
+          toast(`"${name}" updated`);
+        }
+      } else if (editTarget.type === 'builtin') {
+        const overrides = readLS(LS_PRODUCT_OVERRIDES, {});
+        overrides[editTarget.id] = { name, category, price, sizes, colors, tags, image: image || undefined };
+        writeLS(LS_PRODUCT_OVERRIDES, overrides);
+        toast(`"${name}" updated (built-in override saved)`);
+      }
+    } else {
+      // ---- ADD MODE ----
+      const newProduct = {
+        id: 'cp-' + uid().toUpperCase(),
+        name, category, price, sizes, colors, tags,
+        image: image || undefined,
+        _custom: true,
+      };
+      const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+      custom.unshift(newProduct);
+      writeLS(LS_CUSTOM_PRODUCTS, custom);
+      toast(`"${name}" added to catalog`);
+    }
+
     closeApModal();
     $('#addProductForm').reset();
-    toast(`"${name}" added to catalog`);
     renderMgmtProducts();
   });
 
@@ -818,29 +888,57 @@ function initAdmin() {
     const empty = $('#mgmtEmpty');
     if (!grid) return;
     const custom = readLS(LS_CUSTOM_PRODUCTS, []);
-    if (custom.length === 0) {
+    const overrides = readLS(LS_PRODUCT_OVERRIDES, {});
+
+    const all = getAllProducts();
+    if (all.length === 0) {
       grid.innerHTML = '';
       empty.style.display = 'block';
       return;
     }
     empty.style.display = 'none';
-    grid.innerHTML = custom.map((p, i) => `
-      <div class="mgmt-card" data-i="${i}">
+
+    grid.innerHTML = all.map((p) => {
+      const isCustom = p._custom;
+      const isOverridden = !isCustom && overrides[p.id];
+      const badge = isCustom ? 'Custom' : isOverridden ? 'Overridden' : 'Built-in';
+      return `
+      <div class="mgmt-card" data-id="${p.id}">
         <img src="${p.image || teeMockupSVG(p.name, p.colors[0])}" alt="${p.name}" loading="lazy">
         <h4>${p.name}</h4>
         <span class="muted">${p.category} · ৳${p.price}</span>
         <span class="muted">${p.sizes.join(', ')}</span>
-        <button class="btn btn-outline btn-sm" data-action="del-product">Delete</button>
-      </div>`).join('');
+        <span class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;">${badge}</span>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="btn btn-outline btn-sm" data-action="edit-product" style="flex:1;">Edit</button>
+          ${isCustom ? `<button class="btn btn-outline btn-sm" data-action="del-product" style="flex:1;">Delete</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    $$('[data-action="edit-product"]', grid).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.closest('.mgmt-card').dataset.id;
+        const all = getAllProducts();
+        const p = all.find(x => x.id === id);
+        if (!p) return;
+        const isCustom = p._custom;
+        openApModal({ type: isCustom ? 'custom' : 'builtin', id });
+      });
+    });
+
     $$('[data-action="del-product"]', grid).forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = parseInt(btn.closest('.mgmt-card').dataset.i, 10);
-        if (!confirm('Delete this product?')) return;
+        const id = btn.closest('.mgmt-card').dataset.id;
+        if (!confirm('Delete this product? This cannot be undone.')) return;
         const custom = readLS(LS_CUSTOM_PRODUCTS, []);
-        custom.splice(idx, 1);
-        writeLS(LS_CUSTOM_PRODUCTS, custom);
-        toast('Product deleted');
-        renderMgmtProducts();
+        const idx = custom.findIndex(p => p.id === id);
+        if (idx > -1) {
+          custom.splice(idx, 1);
+          writeLS(LS_CUSTOM_PRODUCTS, custom);
+          toast('Product deleted');
+          renderMgmtProducts();
+        }
       });
     });
   }

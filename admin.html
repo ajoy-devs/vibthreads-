@@ -60,6 +60,7 @@
    .ap-modal .field input:focus,.ap-modal .field textarea:focus{ border-color:var(--lime); }
    .ap-modal .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
    .ap-modal .modal-close{ position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; background:var(--bg-soft); display:flex; align-items:center; justify-content:center; font-size:18px; }
+   .ap-modal input[type="file"]{ font-size:12px; padding:6px 0; background:none; border:none !important; }
 </style>
 </head>
 <body data-theme="dark">
@@ -134,17 +135,18 @@
         <button class="btn btn-lime" id="addProductBtn">+ Add Product</button>
       </div>
       <div class="product-mgmt-grid" id="mgmtProductGrid"></div>
-      <div class="empty-state" id="mgmtEmpty" style="margin-top:20px;">No custom products added yet.</div>
+      <div class="empty-state" id="mgmtEmpty" style="margin-top:20px;">No products yet. Click "+ Add Product" to add one.</div>
     </div>
   </div>
 </div>
 
-<!-- ============ ADD PRODUCT MODAL ============ -->
+<!-- ============ ADD / EDIT PRODUCT MODAL ============ -->
 <div class="ap-overlay" id="apOverlay"></div>
 <div class="ap-modal" id="apModal">
   <button class="modal-close" id="apClose">✕</button>
-  <h3>Add New Product</h3>
+  <h3 id="apModalTitle">Add New Product</h3>
   <form id="addProductForm">
+    <input type="hidden" id="apEditId">
     <div class="field"><label>Product name</label><input type="text" id="apName" placeholder="e.g. Naruto Sage Mode Tee" required></div>
     <div class="field-row">
       <div class="field"><label>Category</label><input type="text" id="apCategory" placeholder="e.g. Anime T-Shirts" required></div>
@@ -152,9 +154,13 @@
     </div>
     <div class="field"><label>Sizes (comma-separated)</label><input type="text" id="apSizes" placeholder="S, M, L, XL, XXL" required></div>
     <div class="field"><label>Colors (hex, comma-separated)</label><input type="text" id="apColors" placeholder="#111214, #f3f1ea" required></div>
-    <div class="field"><label>Image URL (leave blank for auto-generated SVG)</label><input type="url" id="apImage" placeholder="https://images.unsplash.com/photo-..."></div>
+    <div class="field-row">
+      <div class="field"><label>Image URL</label><input type="url" id="apImage" placeholder="https://images.unsplash.com/photo-..."></div>
+      <div class="field"><label>Or upload image</label><input type="file" id="apImageFile" accept="image/*"></div>
+    </div>
+    <div class="field" id="apImagePreviewWrap" style="display:none;"><img id="apImagePreview" style="max-height:120px;border-radius:8px;border:1px solid var(--border);"></div>
     <div class="field"><label>Tags (comma-separated, for filters)</label><input type="text" id="apTags" placeholder="anime, crew-neck, oversized-fit" required></div>
-    <button type="submit" class="btn btn-lime btn-block" style="margin-top:6px;">Save Product</button>
+    <button type="submit" class="btn btn-lime btn-block" style="margin-top:6px;" id="apSubmitBtn">Save Product</button>
   </form>
 </div>
 
