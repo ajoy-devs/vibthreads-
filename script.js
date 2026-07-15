@@ -336,11 +336,7 @@ function initMarqueeSafety() {
 }
 
 function initHeroImages() {
-  const h1 = $('#heroTee1');
-  const h2 = $('#heroTee2');
-  const all = getAllProducts();
-  if (h1) h1.style.background = `url(${all[0]?.image || teeMockupSVG('Oversized Streetwear', '#1c1f27')}) center/cover no-repeat`;
-  if (h2) h2.style.background = `url(${all[3]?.image || teeMockupSVG('Anime Graphic Drop', '#21242e')}) center/cover no-repeat`;
+  // no images — hero tee cards show branded placeholders
 }
 
 /* =========================================================
@@ -437,16 +433,13 @@ function productCardHTML(p) {
   if (!cardState[p.id]) cardState[p.id] = { size: p.sizes[0], color: p.colors[0], qty: 1 };
   const st = cardState[p.id];
   const wished = wishlist.includes(p.id);
-  const imgSrc = p.image || teeMockupSVG(p.name, p.colors[0]);
+  const colorSwatches = p.colors.map(c => `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${c};border:2px solid var(--border-strong);"></span>`).join('');
   return `
   <article class="product-card" data-id="${p.id}">
-    <div class="product-media">
-      <img src="${imgSrc}" alt="${p.name}" loading="lazy">
-      <span class="product-tag">${p.category}</span>
-      <button class="wish-btn ${wished ? 'active' : ''}" data-action="wish" aria-label="Toggle wishlist">
-        <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.7-10-9.3C.5 8 2.2 4 6.2 4c2.2 0 3.8 1.3 5.8 3.7C14 5.3 15.6 4 17.8 4c4 0 5.7 4 4.2 7.7C19.5 16.3 12 21 12 21Z"/></svg>
-      </button>
-      <button class="qv-btn" data-action="quickview">Quick View</button>
+    <div class="product-media" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--bg-soft);">
+      <span style="font-family:'Bebas Neue';font-size:42px;color:var(--text-faint);">VT</span>
+      <div style="display:flex;gap:4px;">${colorSwatches}</div>
+      <span class="product-tag" style="position:static;margin-top:4px;">${p.category}</span>
     </div>
     <div class="product-body">
       <h3>${p.name}</h3>
@@ -564,7 +557,7 @@ function renderCart() {
   } else {
     wrap.innerHTML = lines.map(l => `
       <div class="cart-item" data-index="${l.index}">
-        <img src="${l.product.image || teeMockupSVG(l.product.name, l.product.colors[0])}" alt="${l.product.name}">
+        <div style="width:50px;height:60px;border-radius:8px;background:${l.product.colors[0]};flex:none;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:var(--text-faint);">VT</div>
         <div class="cart-item-info">
           <h4>${l.product.name}</h4>
           <span>${l.size} · ${l.color === '#f3f1ea' ? 'White' : ''} </span>
@@ -599,11 +592,14 @@ function openQuickView(p) {
   const modal = $('#quickView');
   const overlay = $('#overlay');
   const st = cardState[p.id];
-  const imgSrc = p.image || teeMockupSVG(p.name, p.colors[0]);
+  const colorSwatches = p.colors.map(c => `<span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${c};border:2px solid var(--border-strong);"></span>`).join('');
   modal.innerHTML = `
     <button class="modal-close" id="qvClose">✕</button>
     <div class="modal-grid">
-      <img src="${imgSrc}" alt="${p.name}">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg-soft);min-height:320px;">
+        <span style="font-family:'Bebas Neue';font-size:64px;color:var(--text-faint);">VT</span>
+        <div style="display:flex;gap:6px;">${colorSwatches}</div>
+      </div>
       <div class="modal-body">
         <span class="product-cat">${p.category}</span>
         <h3 class="display" style="font-size:26px;">${p.name}</h3>
@@ -1104,9 +1100,13 @@ function initAdmin() {
       const isCustom = p._custom;
       const isOverridden = !isCustom && overrides[p.id];
       const badge = isCustom ? 'Custom' : isOverridden ? 'Overridden' : 'Built-in';
+      const colorDots = p.colors.map(c => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};border:1px solid var(--border-strong);"></span>`).join('');
       return `
       <div class="mgmt-card" data-id="${p.id}">
-        <img src="${p.image || teeMockupSVG(p.name, p.colors[0])}" alt="${p.name}" loading="lazy">
+        <div style="aspect-ratio:4/5;border-radius:8px;background:var(--bg-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+          <span style="font-family:'Bebas Neue';font-size:32px;color:var(--text-faint);">VT</span>
+          <div style="display:flex;gap:3px;">${colorDots}</div>
+        </div>
         <h4>${p.name}</h4>
         <span class="muted">${p.category} · ৳${p.price}</span>
         <span class="muted">${p.sizes.join(', ')}</span>
