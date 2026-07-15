@@ -13,6 +13,7 @@ const LS_WISH = 'vibethreads_wishlist';
 const LS_ORDERS = 'vibethreads_orders';
 const LS_THEME = 'vibethreads_theme';
 const LS_NEWSLETTER = 'vibethreads_newsletter';
+const LS_CUSTOM_PRODUCTS = 'vibethreads_custom_products';
 
 /* ---------- helpers ---------- */
 const $  = (sel, ctx = document) => ctx.querySelector(sel);
@@ -115,6 +116,11 @@ const PRODUCTS = [
     price:990, sizes:['M','L','XL','XXL'], colors:['#f3f1ea','#111214'],
     image:'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop&auto=format' },
 ];
+
+function getAllProducts() {
+  const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+  return [...PRODUCTS, ...custom];
+}
 
 /* Category taxonomy shown in the tabbed pill sections */
 const CAT_GROUPS = {
@@ -257,8 +263,9 @@ function initMarqueeSafety() {
 function initHeroImages() {
   const h1 = $('#heroTee1');
   const h2 = $('#heroTee2');
-  if (h1) h1.src = PRODUCTS[0].image || teeMockupSVG('Oversized Streetwear', '#1c1f27');
-  if (h2) h2.src = PRODUCTS[3].image || teeMockupSVG('Anime Graphic Drop', '#21242e');
+  const all = getAllProducts();
+  if (h1) h1.src = all[0]?.image || teeMockupSVG('Oversized Streetwear', '#1c1f27');
+  if (h2) h2.src = all[3]?.image || teeMockupSVG('Anime Graphic Drop', '#21242e');
 }
 
 /* =========================================================
@@ -291,7 +298,7 @@ function initShopPage() {
 function buildCategoryFilterOptions() {
   const sel = $('#filterCategory');
   if (!sel) return;
-  const cats = [...new Set(PRODUCTS.map(p => p.category))];
+  const cats = [...new Set(getAllProducts().map(p => p.category))];
   cats.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
@@ -339,7 +346,7 @@ function matchesFilters(p) {
 function renderProducts() {
   const grid = $('#productGrid');
   if (!grid) return;
-  const list = PRODUCTS.filter(matchesFilters);
+  const list = getAllProducts().filter(matchesFilters);
   $('#resultsCount').textContent = `${list.length} product${list.length !== 1 ? 's' : ''} found`;
 
   if (list.length === 0) {
@@ -461,8 +468,9 @@ function changeCartQty(index, delta) {
 }
 
 function cartLines() {
+  const all = getAllProducts();
   return cart.map((c, i) => {
-    const p = PRODUCTS.find(pp => pp.id === c.id);
+    const p = all.find(pp => pp.id === c.id);
     return p ? { ...c, index:i, product:p, lineTotal:p.price * c.qty } : null;
   }).filter(Boolean);
 }
@@ -687,6 +695,7 @@ function initAdmin() {
     gate.style.display = 'none';
     app.style.display = 'block';
     renderOrders();
+    renderMgmtProducts();
   }
 
   if (loggedIn) unlock();
@@ -761,6 +770,77 @@ function initAdmin() {
         writeLS(LS_ORDERS, all);
         toast(`Order ${id} deleted`);
         renderOrders();
+      });
+    });
+  }
+
+  /* ---------- product management ---------- */
+  $('#addProductBtn')?.addEventListener('click', () => {
+    $('#apModal').classList.add('show');
+    $('#apOverlay').classList.add('show');
+  });
+  function closeApModal() {
+    $('#apModal').classList.remove('show');
+    $('#apOverlay').classList.remove('show');
+  }
+  $('#apClose')?.addEventListener('click', closeApModal);
+  $('#apOverlay')?.addEventListener('click', closeApModal);
+
+  $('#addProductForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = $('#apName').value.trim();
+    const category = $('#apCategory').value.trim();
+    const price = parseInt($('#apPrice').value, 10);
+    const sizes = $('#apSizes').value.split(',').map(s => s.trim()).filter(Boolean);
+    const colors = $('#apColors').value.split(',').map(s => s.trim()).filter(Boolean);
+    const image = $('#apImage').value.trim() || '';
+    const tags = $('#apTags').value.split(',').map(s => s.trim()).filter(Boolean);
+    if (!name || !category || !price || !sizes.length || !colors.length || !tags.length) {
+      toast('Please fill all required fields'); return;
+    }
+    const newProduct = {
+      id: 'cp-' + uid().toUpperCase(),
+      name, category, price, sizes, colors, tags,
+      image: image || undefined,
+      _custom: true,
+    };
+    const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+    custom.unshift(newProduct);
+    writeLS(LS_CUSTOM_PRODUCTS, custom);
+    closeApModal();
+    $('#addProductForm').reset();
+    toast(`"${name}" added to catalog`);
+    renderMgmtProducts();
+  });
+
+  function renderMgmtProducts() {
+    const grid = $('#mgmtProductGrid');
+    const empty = $('#mgmtEmpty');
+    if (!grid) return;
+    const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+    if (custom.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.innerHTML = custom.map((p, i) => `
+      <div class="mgmt-card" data-i="${i}">
+        <img src="${p.image || teeMockupSVG(p.name, p.colors[0])}" alt="${p.name}" loading="lazy">
+        <h4>${p.name}</h4>
+        <span class="muted">${p.category} · ৳${p.price}</span>
+        <span class="muted">${p.sizes.join(', ')}</span>
+        <button class="btn btn-outline btn-sm" data-action="del-product">Delete</button>
+      </div>`).join('');
+    $$('[data-action="del-product"]', grid).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.closest('.mgmt-card').dataset.i, 10);
+        if (!confirm('Delete this product?')) return;
+        const custom = readLS(LS_CUSTOM_PRODUCTS, []);
+        custom.splice(idx, 1);
+        writeLS(LS_CUSTOM_PRODUCTS, custom);
+        toast('Product deleted');
+        renderMgmtProducts();
       });
     });
   }
