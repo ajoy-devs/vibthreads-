@@ -79,29 +79,41 @@ function toast(msg) {
    ========================================================= */
 const PRODUCTS = [
   { id:'p1', name:'Naruto Sage Mode Oversized Tee', category:'Anime T-Shirts', tags:['anime','crew-neck','short-sleeve','oversized-fit','cotton-poly-blend'],
-    price:850, sizes:['S','M','L','XL','XXL'], colors:['#111214','#3a3f4b'] },
+    price:850, sizes:['S','M','L','XL','XXL'], colors:['#111214','#3a3f4b'],
+    image:'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=500&fit=crop&auto=format' },
   { id:'p2', name:'Chattogram Skyline Streetwear Graphic', category:'Streetwear Graphic T-Shirts', tags:['streetwear','crew-neck','short-sleeve','oversized-fit','cotton'],
-    price:790, sizes:['S','M','L','XL'], colors:['#0e0f13','#ff4470'] },
+    price:790, sizes:['S','M','L','XL'], colors:['#0e0f13','#ff4470'],
+    image:'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400&h=500&fit=crop&auto=format' },
   { id:'p3', name:'Minimal "কথা কম, কাজ বেশি" Typography Tee', category:'Minimal Typography T-Shirts', tags:['typography','crew-neck','short-sleeve','regular-fit','cotton'],
-    price:650, sizes:['S','M','L','XL','XXL'], colors:['#f3f1ea','#111214'] },
+    price:650, sizes:['S','M','L','XL','XXL'], colors:['#f3f1ea','#111214'],
+    image:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=500&fit=crop&auto=format' },
   { id:'p4', name:'Respawn Gamer Graphic Tee', category:'Gaming T-Shirts', tags:['gaming','crew-neck','short-sleeve','regular-fit','dry-fit'],
-    price:720, sizes:['S','M','L','XL'], colors:['#111214','#4ec5ff'] },
+    price:720, sizes:['S','M','L','XL'], colors:['#111214','#4ec5ff'],
+    image:'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400&h=500&fit=crop&auto=format' },
   { id:'p5', name:'Us Two Matching Couple Tee (Pair)', category:'Couple T-Shirts', tags:['couple','crew-neck','short-sleeve','regular-fit','cotton'],
-    price:1390, sizes:['S','M','L','XL'], colors:['#ff4470','#111214'] },
+    price:1390, sizes:['S','M','L','XL'], colors:['#ff4470','#111214'],
+    image:'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop&auto=format' },
   { id:'p6', name:'Sabr Islamic Calligraphy Tee', category:'Islamic Quote T-Shirts', tags:['islamic','crew-neck','short-sleeve','regular-fit','cotton'],
-    price:700, sizes:['S','M','L','XL','XXL'], colors:['#111214','#3a3f4b'] },
+    price:700, sizes:['S','M','L','XL','XXL'], colors:['#111214','#3a3f4b'],
+    image:'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=500&fit=crop&auto=format' },
   { id:'p7', name:'Boxy Oversized Blank Essential Tee', category:'Oversized T-Shirts', tags:['trending','crew-neck','short-sleeve','oversized-fit','organic-cotton'],
-    price:590, sizes:['S','M','L','XL','XXL'], colors:['#111214','#f3f1ea','#ff4470'] },
+    price:590, sizes:['S','M','L','XL','XXL'], colors:['#111214','#f3f1ea','#ff4470'],
+    image:'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=400&h=500&fit=crop&auto=format' },
   { id:'p8', name:'Attack Titan Anime Long Sleeve', category:'Anime T-Shirts', tags:['anime','crew-neck','long-sleeve','regular-fit','cotton'],
-    price:980, sizes:['M','L','XL','XXL'], colors:['#111214'] },
+    price:980, sizes:['M','L','XL','XXL'], colors:['#111214'],
+    image:'https://images.unsplash.com/photo-1622445275576-721325763afe?w=400&h=500&fit=crop&auto=format' },
   { id:'p9', name:'Classic Polo Neck Tee', category:'By Neck Style', tags:['trending','polo','short-sleeve','regular-fit','cotton'],
-    price:890, sizes:['S','M','L','XL'], colors:['#0e0f13','#4ec5ff','#f3f1ea'] },
+    price:890, sizes:['S','M','L','XL'], colors:['#0e0f13','#4ec5ff','#f3f1ea'],
+    image:'https://images.unsplash.com/photo-1594938328870-9623159c8c99?w=400&h=500&fit=crop&auto=format' },
   { id:'p10', name:'Level Up Gamer V-Neck', category:'Gaming T-Shirts', tags:['gaming','v-neck','short-sleeve','slim-fit','cotton-poly-blend'],
-    price:750, sizes:['S','M','L','XL'], colors:['#111214','#ff4470'] },
+    price:750, sizes:['S','M','L','XL'], colors:['#111214','#ff4470'],
+    image:'https://images.unsplash.com/photo-1559551409-dadc959f76b8?w=400&h=500&fit=crop&auto=format' },
   { id:'p11', name:'Athletic Muscle Fit Tee', category:'By Fit', tags:['trending','crew-neck','muscle','athletic-fit','dry-fit'],
-    price:680, sizes:['S','M','L','XL'], colors:['#111214','#3a3f4b'] },
+    price:680, sizes:['S','M','L','XL'], colors:['#111214','#3a3f4b'],
+    image:'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=500&fit=crop&auto=format' },
   { id:'p12', name:'Bamboo Soft Henley Tee', category:'By Fabric', tags:['trending','henley','short-sleeve','regular-fit','bamboo'],
-    price:990, sizes:['M','L','XL','XXL'], colors:['#f3f1ea','#111214'] },
+    price:990, sizes:['M','L','XL','XXL'], colors:['#f3f1ea','#111214'],
+    image:'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop&auto=format' },
 ];
 
 /* Category taxonomy shown in the tabbed pill sections */
@@ -245,8 +257,8 @@ function initMarqueeSafety() {
 function initHeroImages() {
   const h1 = $('#heroTee1');
   const h2 = $('#heroTee2');
-  if (h1) h1.src = teeMockupSVG('Oversized Streetwear', '#1c1f27');
-  if (h2) h2.src = teeMockupSVG('Anime Graphic Drop', '#21242e');
+  if (h1) h1.src = PRODUCTS[0].image || teeMockupSVG('Oversized Streetwear', '#1c1f27');
+  if (h2) h2.src = PRODUCTS[3].image || teeMockupSVG('Anime Graphic Drop', '#21242e');
 }
 
 /* =========================================================
@@ -343,10 +355,11 @@ function productCardHTML(p) {
   if (!cardState[p.id]) cardState[p.id] = { size: p.sizes[0], color: p.colors[0], qty: 1 };
   const st = cardState[p.id];
   const wished = wishlist.includes(p.id);
+  const imgSrc = p.image || teeMockupSVG(p.name, p.colors[0]);
   return `
   <article class="product-card" data-id="${p.id}">
     <div class="product-media">
-      <img src="${teeMockupSVG(p.name, p.colors[0])}" alt="${p.name}" loading="lazy">
+      <img src="${imgSrc}" alt="${p.name}" loading="lazy">
       <span class="product-tag">${p.category}</span>
       <button class="wish-btn ${wished ? 'active' : ''}" data-action="wish" aria-label="Toggle wishlist">
         <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.7-10-9.3C.5 8 2.2 4 6.2 4c2.2 0 3.8 1.3 5.8 3.7C14 5.3 15.6 4 17.8 4c4 0 5.7 4 4.2 7.7C19.5 16.3 12 21 12 21Z"/></svg>
@@ -468,7 +481,7 @@ function renderCart() {
   } else {
     wrap.innerHTML = lines.map(l => `
       <div class="cart-item" data-index="${l.index}">
-        <img src="${teeMockupSVG(l.product.name, l.product.colors[0])}" alt="${l.product.name}">
+        <img src="${l.product.image || teeMockupSVG(l.product.name, l.product.colors[0])}" alt="${l.product.name}">
         <div class="cart-item-info">
           <h4>${l.product.name}</h4>
           <span>${l.size} · ${l.color === '#f3f1ea' ? 'White' : ''} </span>
@@ -503,10 +516,11 @@ function openQuickView(p) {
   const modal = $('#quickView');
   const overlay = $('#overlay');
   const st = cardState[p.id];
+  const imgSrc = p.image || teeMockupSVG(p.name, p.colors[0]);
   modal.innerHTML = `
     <button class="modal-close" id="qvClose">✕</button>
     <div class="modal-grid">
-      <img src="${teeMockupSVG(p.name, p.colors[0])}" alt="${p.name}">
+      <img src="${imgSrc}" alt="${p.name}">
       <div class="modal-body">
         <span class="product-cat">${p.category}</span>
         <h3 class="display" style="font-size:26px;">${p.name}</h3>
