@@ -557,7 +557,7 @@ function renderCart() {
   } else {
     wrap.innerHTML = lines.map(l => `
       <div class="cart-item" data-index="${l.index}">
-        <div style="width:50px;height:60px;border-radius:8px;background:${l.product.colors[0]};flex:none;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:var(--text-faint);">VT</div>
+        <div class="ci-swatch" style="background:${l.product.colors[0]};">VT</div>
         <div class="cart-item-info">
           <h4>${l.product.name}</h4>
           <span>${l.size} · ${l.color === '#f3f1ea' ? 'White' : ''} </span>
