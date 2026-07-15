@@ -339,8 +339,8 @@ function initHeroImages() {
   const h1 = $('#heroTee1');
   const h2 = $('#heroTee2');
   const all = getAllProducts();
-  if (h1) h1.src = all[0]?.image || teeMockupSVG('Oversized Streetwear', '#1c1f27');
-  if (h2) h2.src = all[3]?.image || teeMockupSVG('Anime Graphic Drop', '#21242e');
+  if (h1) h1.style.background = `url(${all[0]?.image || teeMockupSVG('Oversized Streetwear', '#1c1f27')}) center/cover no-repeat`;
+  if (h2) h2.style.background = `url(${all[3]?.image || teeMockupSVG('Anime Graphic Drop', '#21242e')}) center/cover no-repeat`;
 }
 
 /* =========================================================
