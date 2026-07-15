@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — VibeThreads</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body{ background:var(--bg); }
+  .admin-shell{ min-height:100vh; }
+  .admin-nav{
+    height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; background:var(--bg); z-index:20;
+  }
+  .admin-wrap{ max-width:1200px; margin:0 auto; padding:36px 24px 80px; }
+  .gate{ max-width:380px; margin:120px auto; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:34px; text-align:center; }
+  .gate h2{ font-family:'Bebas Neue'; font-size:28px; letter-spacing:1px; margin-bottom:6px; }
+  .gate p{ color:var(--text-mute); font-size:13.5px; margin-bottom:22px; }
+  .gate input{ width:100%; background:var(--bg-soft); border:1px solid var(--border-strong); border-radius:10px; padding:12px 14px; color:var(--text); margin-bottom:14px; outline:none; }
+  .gate input:focus{ border-color:var(--lime); }
+  .stat-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:30px; }
+  .stat-card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .stat-card b{ font-family:'Bebas Neue'; font-size:32px; color:var(--lime); display:block; }
+  .stat-card span{ font-size:12.5px; color:var(--text-faint); }
+  .admin-toolbar{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .admin-toolbar input, .admin-toolbar select{
+    background:var(--card); border:1px solid var(--border-strong); border-radius:10px; padding:10px 14px; color:var(--text); font-size:13.5px;
+  }
+  .table-wrap{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; min-width:820px; }
+  th, td{ text-align:left; padding:16px 18px; border-bottom:1px solid var(--border); font-size:13.5px; vertical-align:top; }
+  th{ font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-faint); }
+  tr:last-child td{ border-bottom:none; }
+  select{ background:var(--bg-soft); border:1px solid var(--border-strong); color:var(--text); border-radius:8px; padding:7px 10px; font-size:12.5px; }
+  .muted{ color:var(--text-faint); font-size:11.5px; }
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--text-mute); display:none; }
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="admin-shell">
+  <header class="admin-nav">
+    <a href="index.html" class="brand"><span class="brand-mark">V</span>VIBE<span class="dot">THREADS</span> <span class="muted" style="margin-left:8px;font-family:'Space Mono';">/ admin</span></a>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      </button>
+      <button class="btn btn-outline btn-sm" id="adminLogout">Log out</button>
+    </div>
+  </header>
+
+  <!-- ============ LOGIN GATE ============ -->
+  <div class="gate" id="adminGate">
+    <h2>ADMIN LOGIN</h2>
+    <p>Enter the store passcode to view and manage orders.</p>
+    <form id="adminLoginForm">
+      <input type="password" id="adminPass" placeholder="Passcode" required>
+      <button type="submit" class="btn btn-lime btn-block">Unlock Dashboard</button>
+    </form>
+    <p class="muted" style="margin-top:16px;">Demo passcode: <span class="mono">vibethreads2026</span></p>
+  </div>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="admin-wrap" id="adminApp" style="display:none;">
+    <div class="section-head" style="margin-bottom:26px;">
+      <span class="eyebrow">Dashboard</span>
+      <h2 class="display" style="font-size:36px;">Orders</h2>
+      <p>Every order placed from the storefront is saved locally to this browser — update statuses or remove test orders below.</p>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><b id="statTotal">0</b><span>Total orders</span></div>
+      <div class="stat-card"><b id="statPending">0</b><span>Pending orders</span></div>
+      <div class="stat-card"><b id="statRevenue">৳0</b><span>Total order value</span></div>
+    </div>
+
+    <div class="admin-toolbar">
+      <input type="text" id="adminSearch" placeholder="Search by order ID, name, or phone...">
+      <select id="adminStatusFilter">
+        <option value="all">All statuses</option>
+        <option>Pending</option>
+        <option>Confirmed</option>
+        <option>Shipped</option>
+        <option>Delivered</option>
+        <option>Cancelled</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th><th>Customer</th><th>Products</th><th>Total</th><th>Payment</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
+      <div class="empty-state" id="ordersEmpty">No orders yet — place a test order from the storefront to see it here.</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+<script src="script.js"></script>
+</body>
+</html>
