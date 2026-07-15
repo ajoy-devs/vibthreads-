@@ -40,7 +40,12 @@
   select{ background:var(--bg-soft); border:1px solid var(--border-strong); color:var(--text); border-radius:8px; padding:7px 10px; font-size:12.5px; }
    .muted{ color:var(--text-faint); font-size:11.5px; }
    .empty-state{ text-align:center; padding:60px 20px; color:var(--text-mute); display:none; }
-   .admin-section{ margin-top:48px; }
+   .admin-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; }
+   .admin-tab{ padding:10px 20px; border-radius:100px; font-size:13px; font-weight:700; border:1px solid var(--border-strong); color:var(--text-mute); transition:all .2s; }
+   .admin-tab:hover{ color:var(--text); }
+   .admin-tab.active{ background:var(--text); color:var(--bg); border-color:var(--text); }
+   .admin-panel[hidden]{ display:none; }
+   .admin-section{ margin-top:32px; }
    .admin-section h3{ font-family:'Bebas Neue'; font-size:26px; margin-bottom:18px; }
    .product-mgmt-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
    .mgmt-card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:8px; }
@@ -61,6 +66,7 @@
    .ap-modal .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
    .ap-modal .modal-close{ position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; background:var(--bg-soft); display:flex; align-items:center; justify-content:center; font-size:18px; }
    .ap-modal input[type="file"]{ font-size:12px; padding:6px 0; background:none; border:none !important; }
+   .order-detail td{ background:var(--bg); }
 </style>
 </head>
 <body data-theme="dark">
@@ -97,45 +103,106 @@
 
     <div class="stat-cards">
       <div class="stat-card"><b id="statTotal">0</b><span>Total orders</span></div>
-      <div class="stat-card"><b id="statPending">0</b><span>Pending orders</span></div>
-      <div class="stat-card"><b id="statRevenue">৳0</b><span>Total order value</span></div>
+      <div class="stat-card"><b id="statPending">0</b><span>Pending</span></div>
+      <div class="stat-card"><b id="statRevenue">৳0</b><span>Revenue</span></div>
+      <div class="stat-card"><b id="statProducts">0</b><span>Products</span></div>
+      <div class="stat-card"><b id="statCustomers">0</b><span>Customers</span></div>
+      <div class="stat-card"><b id="statToday">0</b><span>Today's orders</span></div>
     </div>
 
-    <div class="admin-toolbar">
-      <input type="text" id="adminSearch" placeholder="Search by order ID, name, or phone...">
-      <select id="adminStatusFilter">
-        <option value="all">All statuses</option>
-        <option>Pending</option>
-        <option>Confirmed</option>
-        <option>Shipped</option>
-        <option>Delivered</option>
-        <option>Cancelled</option>
-      </select>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-apanel="orders">Orders</button>
+      <button class="admin-tab" data-apanel="customers">Customers</button>
+      <button class="admin-tab" data-apanel="products">Products</button>
+      <button class="admin-tab" data-apanel="newsletter">Newsletter</button>
+      <button class="admin-tab" data-apanel="data">Data</button>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th><th>Customer</th><th>Products</th><th>Total</th><th>Payment</th><th>Status</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="ordersBody"></tbody>
-      </table>
-      <div class="empty-state" id="ordersEmpty">No orders yet — place a test order from the storefront to see it here.</div>
-    </div>
-
-    <!-- ============ PRODUCTS MANAGEMENT ============ -->
-    <div class="admin-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
-        <div>
-          <span class="eyebrow">Catalog</span>
-          <h3>Manage Products</h3>
-        </div>
-        <button class="btn btn-lime" id="addProductBtn">+ Add Product</button>
+    <!-- ===== ORDERS PANEL ===== -->
+    <div class="admin-panel" data-apanel="orders">
+      <div class="admin-toolbar">
+        <input type="text" id="adminSearch" placeholder="Search by order ID, name, or phone...">
+        <select id="adminStatusFilter">
+          <option value="all">All statuses</option>
+          <option>Pending</option>
+          <option>Confirmed</option>
+          <option>Shipped</option>
+          <option>Delivered</option>
+          <option>Cancelled</option>
+        </select>
+        <button class="btn btn-outline btn-sm" id="clearCompletedBtn">Clear completed</button>
       </div>
-      <div class="product-mgmt-grid" id="mgmtProductGrid"></div>
-      <div class="empty-state" id="mgmtEmpty" style="margin-top:20px;">No products yet. Click "+ Add Product" to add one.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30px;"></th>
+              <th>Order</th><th>Customer</th><th>Products</th><th>Total</th><th>Payment</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+        <div class="empty-state" id="ordersEmpty">No orders yet — place a test order from the storefront to see it here.</div>
+      </div>
+    </div>
+
+    <!-- ===== CUSTOMERS PANEL ===== -->
+    <div class="admin-panel" data-apanel="customers" hidden>
+      <div class="admin-section">
+        <h3>Customers</h3>
+        <p style="color:var(--text-mute);font-size:13.5px;margin-bottom:18px;">All unique customers who have placed orders.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Orders</th><th>Total spent</th></tr></thead>
+            <tbody id="customersBody"></tbody>
+          </table>
+          <div class="empty-state" id="customersEmpty">No customers yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRODUCTS PANEL ===== -->
+    <div class="admin-panel" data-apanel="products" hidden>
+      <div class="admin-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+          <div>
+            <h3>Manage Products</h3>
+            <p style="color:var(--text-mute);font-size:13.5px;">Add, edit, or delete products. Changes sync to the storefront instantly.</p>
+          </div>
+          <button class="btn btn-lime" id="addProductBtn">+ Add Product</button>
+        </div>
+        <div class="product-mgmt-grid" id="mgmtProductGrid"></div>
+        <div class="empty-state" id="mgmtEmpty" style="margin-top:20px;">No products yet. Click "+ Add Product" to add one.</div>
+      </div>
+    </div>
+
+    <!-- ===== NEWSLETTER PANEL ===== -->
+    <div class="admin-panel" data-apanel="newsletter" hidden>
+      <div class="admin-section">
+        <h3>Newsletter Subscribers</h3>
+        <p style="color:var(--text-mute);font-size:13.5px;margin-bottom:18px;">Email addresses collected from the storefront subscribe form.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Email</th></tr></thead>
+            <tbody id="newsletterBody"></tbody>
+          </table>
+          <div class="empty-state" id="newsletterEmpty">No subscribers yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DATA PANEL ===== -->
+    <div class="admin-panel" data-apanel="data" hidden>
+      <div class="admin-section">
+        <h3>Data Management</h3>
+        <p style="color:var(--text-mute);font-size:13.5px;margin-bottom:18px;">Export your store data as a backup, import a previous backup, or reset everything.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;">
+          <button class="btn btn-lime" id="exportDataBtn">📥 Export Backup</button>
+          <label class="btn btn-outline" style="cursor:pointer;">📤 Import Backup<input type="file" id="importDataInput" accept=".json" style="display:none;"></label>
+          <button class="btn btn-pink" id="clearAllBtn">🗑️ Clear All Data</button>
+        </div>
+        <div id="importResult" style="margin-top:14px;font-size:13px;color:var(--text-mute);"></div>
+      </div>
     </div>
   </div>
 </div>

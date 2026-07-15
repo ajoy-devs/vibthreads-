@@ -697,7 +697,10 @@ function initAdmin() {
     sessionStorage.setItem('vt_admin', '1');
     gate.style.display = 'none';
     app.style.display = 'block';
+    updateAllStats();
     renderOrders();
+    renderCustomers();
+    renderNewsletter();
     renderMgmtProducts();
   }
 
@@ -717,7 +720,22 @@ function initAdmin() {
 
   $('#adminSearch')?.addEventListener('input', renderOrders);
   $('#adminStatusFilter')?.addEventListener('change', renderOrders);
+  $('#clearCompletedBtn')?.addEventListener('click', () => {
+    if (!confirm('Delete all Delivered and Cancelled orders?')) return;
+    const all = readLS(LS_ORDERS, []).filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+    writeLS(LS_ORDERS, all);
+    toast('Completed orders cleared');
+    renderOrders(); updateAllStats(); renderCustomers();
+  });
 
+  // Tab switching
+  $$('.admin-tab').forEach(tab => tab.addEventListener('click', () => {
+    $$('.admin-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    $$('.admin-panel').forEach(p => p.hidden = p.dataset.apanel !== tab.dataset.apanel);
+  }));
+
+  // ===== ORDER RENDER =====
   function renderOrders() {
     const orders = readLS(LS_ORDERS, []);
     const tbody = $('#ordersBody');
@@ -734,10 +752,6 @@ function initAdmin() {
       return hay.includes(q);
     });
 
-    $('#statTotal').textContent = orders.length;
-    $('#statPending').textContent = orders.filter(o => o.status === 'Pending').length;
-    $('#statRevenue').textContent = money(orders.reduce((s,o) => s + o.total, 0));
-
     if (filtered.length === 0) {
       tbody.innerHTML = '';
       empty.style.display = 'block';
@@ -745,8 +759,9 @@ function initAdmin() {
     }
     empty.style.display = 'none';
 
-    tbody.innerHTML = filtered.map(o => `
+    tbody.innerHTML = filtered.map((o, idx) => `
       <tr data-id="${o.id}">
+        <td><button class="icon-btn" style="width:26px;height:26px;font-size:12px;" data-action="toggle-detail">▶</button></td>
         <td><span class="mono">${o.id}</span><br><span class="muted">${new Date(o.date).toLocaleString('en-BD')}</span></td>
         <td><b>${o.customer.name}</b><br><span class="muted">${o.customer.phone}</span><br><span class="muted">${o.customer.area}</span></td>
         <td>${o.items.map(it => `${it.name} × ${it.qty} (${it.size})`).join('<br>')}</td>
@@ -758,24 +773,139 @@ function initAdmin() {
           </select>
         </td>
         <td><button class="btn btn-sm btn-outline" data-action="delete">Delete</button></td>
+      </tr>
+      <tr class="order-detail" data-detail="${o.id}" style="display:none;">
+        <td colspan="8" style="padding:0 18px 18px;">
+          <div style="background:var(--bg-soft);border-radius:12px;padding:18px;font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><b style="color:var(--text-faint);font-size:11px;text-transform:uppercase;">Address</b><br>${o.customer.address}</div>
+            <div><b style="color:var(--text-faint);font-size:11px;text-transform:uppercase;">Payment</b><br>${o.payment} · ${money(o.total)}</div>
+            <div><b style="color:var(--text-faint);font-size:11px;text-transform:uppercase;">Items</b><br>${o.items.map(it => `${it.name} — ${it.size}, ${it.color}, ×${it.qty} = ${money(it.price * it.qty)}`).join('<br>')}</div>
+            <div><b style="color:var(--text-faint);font-size:11px;text-transform:uppercase;">Subtotal / Delivery</b><br>${money(o.subtotal)} + ${money(o.delivery)}</div>
+          </div>
+        </td>
       </tr>`).join('');
 
-    $$('#ordersBody tr').forEach(row => {
+    $$('#ordersBody tr[data-id]').forEach(row => {
       const id = row.dataset.id;
-      row.querySelector('[data-action="status"]').addEventListener('change', (e) => {
+      row.querySelector('[data-action="toggle-detail"]')?.addEventListener('click', () => {
+        const detail = $(`tr[data-detail="${id}"]`);
+        if (detail) {
+          const isVisible = detail.style.display !== 'none';
+          detail.style.display = isVisible ? 'none' : 'table-row';
+          row.querySelector('[data-action="toggle-detail"]').textContent = isVisible ? '▶' : '▼';
+        }
+      });
+      row.querySelector('[data-action="status"]')?.addEventListener('change', (e) => {
         const all = readLS(LS_ORDERS, []);
         const ord = all.find(o => o.id === id);
         if (ord) { ord.status = e.target.value; writeLS(LS_ORDERS, all); toast(`Order ${id} marked ${ord.status}`); renderOrders(); }
       });
-      row.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      row.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
         if (!confirm(`Delete order ${id}? This cannot be undone.`)) return;
         const all = readLS(LS_ORDERS, []).filter(o => o.id !== id);
         writeLS(LS_ORDERS, all);
         toast(`Order ${id} deleted`);
-        renderOrders();
+        renderOrders(); updateAllStats(); renderCustomers();
       });
     });
   }
+
+  // ===== CUSTOMERS =====
+  function renderCustomers() {
+    const tbody = $('#customersBody');
+    const empty = $('#customersEmpty');
+    if (!tbody) return;
+    const orders = readLS(LS_ORDERS, []);
+    const map = {};
+    orders.forEach(o => {
+      const key = o.customer.phone;
+      if (!map[key]) map[key] = { ...o.customer, count:0, total:0 };
+      map[key].count++;
+      map[key].total += o.total;
+    });
+    const list = Object.values(map);
+    if (list.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map(c => `
+      <tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>${c.area}</td><td>${c.count}</td><td class="mono">${money(c.total)}</td></tr>`).join('');
+  }
+
+  // ===== NEWSLETTER =====
+  function renderNewsletter() {
+    const tbody = $('#newsletterBody');
+    const empty = $('#newsletterEmpty');
+    if (!tbody) return;
+    const list = readLS(LS_NEWSLETTER, []);
+    if (list.length === 0) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map((e, i) => `<tr><td>${i + 1}</td><td>${e}</td></tr>`).join('');
+  }
+
+  // ===== UPDATE ALL STATS =====
+  function updateAllStats() {
+    const orders = readLS(LS_ORDERS, []);
+    const customers = new Set(orders.map(o => o.customer.phone));
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+    const allProducts = getAllProducts();
+    $('#statTotal').textContent = orders.length;
+    $('#statPending').textContent = orders.filter(o => o.status === 'Pending').length;
+    $('#statRevenue').textContent = money(orders.reduce((s,o) => s + o.total, 0));
+    $('#statProducts').textContent = allProducts.length;
+    $('#statCustomers').textContent = customers.size;
+    $('#statToday').textContent = todayOrders.length;
+  }
+
+  // ===== DATA EXPORT / IMPORT / CLEAR =====
+  $('#exportDataBtn')?.addEventListener('click', () => {
+    const data = {
+      orders: readLS(LS_ORDERS, []),
+      customProducts: readLS(LS_CUSTOM_PRODUCTS, []),
+      productOverrides: readLS(LS_PRODUCT_OVERRIDES, {}),
+      newsletter: readLS(LS_NEWSLETTER, []),
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `vibethreads-backup-${Date.now()}.json`; a.click();
+    URL.revokeObjectURL(url);
+    toast('Backup downloaded');
+  });
+
+  $('#importDataInput')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.orders) writeLS(LS_ORDERS, data.orders);
+        if (data.customProducts) writeLS(LS_CUSTOM_PRODUCTS, data.customProducts);
+        if (data.productOverrides) writeLS(LS_PRODUCT_OVERRIDES, data.productOverrides);
+        if (data.newsletter) writeLS(LS_NEWSLETTER, data.newsletter);
+        $('#importResult').textContent = `✅ Imported: ${data.orders?.length || 0} orders, ${data.customProducts?.length || 0} custom products, ${data.newsletter?.length || 0} subscribers.`;
+        toast('Data imported successfully');
+        renderOrders(); renderMgmtProducts(); renderCustomers(); renderNewsletter(); updateAllStats();
+      } catch (err) {
+        $('#importResult').textContent = '❌ Invalid backup file';
+        toast('Import failed — invalid file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  $('#clearAllBtn')?.addEventListener('click', () => {
+    if (!confirm('⚠️ Delete ALL orders, custom products, overrides, and newsletter data? This cannot be undone.')) return;
+    if (!confirm('Are you sure? This will wipe everything except the built-in products.')) return;
+    writeLS(LS_ORDERS, []);
+    writeLS(LS_CUSTOM_PRODUCTS, []);
+    writeLS(LS_PRODUCT_OVERRIDES, {});
+    writeLS(LS_NEWSLETTER, []);
+    toast('All data cleared');
+    renderOrders(); renderMgmtProducts(); renderCustomers(); renderNewsletter(); updateAllStats();
+  });
 
   /* ---------- product management ---------- */
   let editTarget = null; // { type:'custom'|'builtin', id, index }
